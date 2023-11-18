@@ -12,6 +12,24 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
+from dataclasses import dataclass
+from typing import Literal
+
+
+# Identifies between User and AI messages
+@dataclass
+class Message:
+    origin: Literal["User", "AI"]
+    message: str
+
+
+# Store chat history between User & AI
+def initialize_session_state():
+    if "history" not in st.session_state:
+        st.session_state.history = []
+
+
+initialize_session_state()
 
 
 def extract_text(url):
@@ -117,12 +135,6 @@ def isValid(apiKey):
     else:
         return True
 
-# Disable prompting when Ratelimited
-
-
-def disable():
-    st.session_state.disable = True
-
 
 def main():
     st.set_page_config(
@@ -135,7 +147,9 @@ def main():
 
     OPENAI_API_KEY = st.text_input(
         'OpenAI API Key', placeholder='sk-...IAzF', type="password")
+
     st.divider()
+
     if OPENAI_API_KEY:
 
         LLM = ChatOpenAI(
@@ -159,6 +173,7 @@ def main():
                 extract_text(user_input)
 
         st.divider()
+
         prompt_placehoolder = st.form("chat-form")
         with prompt_placehoolder:
             st.markdown("**CHAT** - Enter to Submit")
@@ -177,8 +192,13 @@ def main():
                     with st.spinner("Processing..."):
                         response = response_chain(create_embedding(
                             create_docs(read_data())), prompt=question, LLM=LLM)
-                        st.write("### Answer")
-                        st.write(response)
+                        st.session_state.history.append(
+                            Message("User", question))
+                        st.session_state.history.append(
+                            Message("AI", response))
+                        for chat in st.session_state.history:
+                            st.write(f"**{chat.origin}**: {chat.message}")
+
             except:
                 if isValid(OPENAI_API_KEY) is False:
                     st.error("Invalid API Key", icon="🚨")
