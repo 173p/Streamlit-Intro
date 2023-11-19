@@ -17,8 +17,6 @@ from typing import Literal
 
 
 # Identifies between User and AI messages
-
-
 @dataclass
 class Message:
     origin: Literal["User", "AI"]
@@ -36,6 +34,7 @@ initialize_session_state()
 
 def extract_text(url):
     try:
+        global title
         # Send an HTTP request to the URL
         response = requests.get(url)
 
@@ -50,11 +49,11 @@ def extract_text(url):
 
             # Excludes special characters from string to avoid errors when creating files
             title = re.sub('[^A-Za-z0-9]+', ' ', title)
+            title += ".txt"
 
-            with open(f'data/{title}.txt', 'w', encoding='utf-8') as content:
+            with open(f'data/{title}', 'w', encoding='utf-8') as content:
                 content.write(text)
             st.success("Successfully Retrieved!")
-            return text
     except:
         st.error(
             f"Failed to retrieve page.")
@@ -64,6 +63,7 @@ def extract_text(url):
 # Extract text from a YouTube video given its URL
 def extract_video_text(url):
     try:
+        global title
         if 'v=' in url:
             # Extract the video identifier from the URL after v=""
             url_ID = url.split('v=')[1].split('&')[0]
@@ -76,28 +76,26 @@ def extract_video_text(url):
             # Fetch the video title to name the text file
             soup = BeautifulSoup(requests.get(url).text, 'html.parser')
             title = soup.title.get_text()
-
             # Removes special characters as to avoid errors in file creation
             title = re.sub('[^A-Za-z0-9]+', ' ', title)
+            title += ".txt"
 
-            with open(f'data/{title}.txt', 'w', encoding='utf-8') as content:
+            with open(f'data/{title}', 'w', encoding='utf-8') as content:
                 content.write(text)
             st.success("Successfully Retrieved!")
-            return text
         else:
             st.error("Invalid URL")
     except:
         st.error("Unsupported Video")
 
 
-def read_data():
+def read_data(filename):
     text = ""
     if os.path.isdir("data") is False:
         os.mkdir("data")
     data_dir = os.path.join(os.getcwd(), "data")
-    for filename in os.listdir(data_dir):
-        with open(os.path.join(data_dir, filename), "r", encoding="utf-8") as f:
-            text += f.read()
+    with open(os.path.join(data_dir, filename), "r", encoding="utf-8") as f:
+        text += f.read()
     return text
 
 
@@ -160,18 +158,18 @@ def main():
             openai_api_key=OPENAI_API_KEY
         )
 
-        source = st.radio("Select Input Type",
+        source = st.radio("Select Media Type",
                           ("Article", "Video"))
 
         if source == 'Video':
             user_input = st.text_input("Insert Video URL", "")
             source_button = st.button("Submit")
-            if source_button and user_input != "":
+            if (user_input or source_button) and user_input != "":
                 extract_video_text(user_input)
         elif source == 'Article':
             user_input = st.text_input("Insert Article URL", "")
             source_button = st.button("Submit")
-            if source_button and user_input != "":
+            if (user_input or source_button) and user_input != "":
                 extract_text(user_input)
 
         st.divider()
@@ -192,7 +190,7 @@ def main():
                 if prompt_button and question != "":
                     with st.spinner("Processing..."):
                         response = response_chain(create_embedding(
-                            create_docs(read_data())), prompt=question, LLM=LLM)
+                            create_docs(read_data(title))), prompt=question, LLM=LLM)
                         st.session_state.history.append(
                             Message("User", question))
                         st.session_state.history.append(
