@@ -187,7 +187,7 @@ def main():
                 type="primary"
             )
             try:
-                if prompt_button and question != "":
+                if (prompt_button or question) and question != "" and user_input != "":
                     with st.spinner("Processing..."):
                         response = response_chain(create_embedding(
                             create_docs(read_data(title))), prompt=question, LLM=LLM)
