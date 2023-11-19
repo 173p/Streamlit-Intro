@@ -17,6 +17,8 @@ from typing import Literal
 
 
 # Identifies between User and AI messages
+
+
 @dataclass
 class Message:
     origin: Literal["User", "AI"]
@@ -107,7 +109,7 @@ def create_docs(text):
 
 
 def create_embedding(docs):
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(openai_api_key=openai.api_key)
     doc_search = FAISS.from_texts(docs, embeddings)
     return doc_search
 
@@ -151,7 +153,7 @@ def main():
     st.divider()
 
     if OPENAI_API_KEY:
-
+        openai.api_key = OPENAI_API_KEY
         LLM = ChatOpenAI(
             temperature=0.8,
             model_name="gpt-3.5-turbo",
@@ -186,7 +188,6 @@ def main():
                 "Submit",
                 type="primary"
             )
-
             try:
                 if prompt_button and question != "":
                     with st.spinner("Processing..."):
@@ -198,7 +199,6 @@ def main():
                             Message("AI", response))
                         for chat in st.session_state.history:
                             st.write(f"**{chat.origin}**: {chat.message}")
-
             except:
                 if isValid(OPENAI_API_KEY) is False:
                     st.error("Invalid API Key", icon="🚨")
