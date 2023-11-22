@@ -148,8 +148,8 @@ def load_jif(url: str):
 
 def main():
     st.set_page_config(
-        page_title="SumupAI",
-        page_icon="📝"
+        page_title="ElevateAI",
+        page_icon="🚀"
     )
 
     st_lottie("https://lottie.host/3a984834-ae34-41fd-872c-e8023fac933a/DpRXYlKOdz.json",
