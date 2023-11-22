@@ -3,6 +3,7 @@ import os
 import openai
 import requests
 import re
+import json
 import time
 
 
@@ -14,9 +15,11 @@ from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from dataclasses import dataclass
 from typing import Literal
-
+from streamlit_lottie import st_lottie
 
 # Identifies between User and AI messages
+
+
 @dataclass
 class Message:
     origin: Literal["User", "AI"]
@@ -136,14 +139,23 @@ def isValid(apiKey):
         return True
 
 
+def load_jif(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+
 def main():
     st.set_page_config(
         page_title="SumupAI",
         page_icon="📝"
     )
 
-    st.title("SumupAI")
-    st.write("Engage in dynamic conversations with your favorite YouTube videos, podcasts, and articles.")
+    st_lottie("https://lottie.host/3a984834-ae34-41fd-872c-e8023fac933a/DpRXYlKOdz.json",
+              key="gif", width=100, height=100)
+    st.title("ElevateAI")
+    st.write("Empowering ChatGPT to Engage in dynamic conversations with your favorite YouTube videos, podcasts, and articles.")
 
     OPENAI_API_KEY = st.text_input(
         'OpenAI API Key', placeholder='sk-...IAzF', type="password")
@@ -162,12 +174,14 @@ def main():
                           ("Article", "Video"))
 
         if source == 'Video':
-            user_input = st.text_input("Insert Video URL", "")
+            user_input = st.text_input(
+                "Insert Video URL", placeholder="https://www.youtube.com/watch?v=JXAsdsHXZ5c")
             source_button = st.button("Submit")
             if (user_input or source_button) and user_input != "":
                 extract_video_text(user_input)
         elif source == 'Article':
-            user_input = st.text_input("Insert Article URL", "")
+            user_input = st.text_input(
+                "Insert Article URL", placeholder="https://80000hours.org/problem-profiles/artificial-intelligence")
             source_button = st.button("Submit")
             if (user_input or source_button) and user_input != "":
                 extract_text(user_input)
